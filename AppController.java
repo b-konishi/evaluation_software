@@ -54,6 +54,7 @@ public class AppController {
 
 	//String sample_path = "/konishi/evaluation_software/Octocat.png";
 
+	AnimationTimer always_timer = null;
 	AnimationTimer timer = null;
 
 	/**
@@ -102,14 +103,14 @@ public class AppController {
 		 * 軽い処理＆GUIコンポーネントを操作する場合はアニメーションタイマーで処理
 		 * (重たい処理はGUIが固まるので注意)
 		 */
-		timer = new AnimationTimer() {	
+		always_timer = new AnimationTimer() {	
 			@Override
 			public void handle(long now) {
 				video_frame.setFitHeight(image_pane.getHeight()*0.9);
 				video_frame.setFitWidth(image_pane.getWidth());
 			}
 		};
-		timer.start();
+		always_timer.start();
 
 	}
 
@@ -167,7 +168,12 @@ public class AppController {
 
 	@FXML public void handleSaveCsvMenu(ActionEvent e) throws IOException {
 		System.out.println("[SELECT] Save CSV");
-
+		
+		if (save_dir.isEmpty()) {
+			description_label.setText("Select Image-Directory");
+			return;
+		}
+		
 		if (getFilteredFiles(save_dir, imageExtension).length != evaluation_map.size()) {
 			description_label.setText("There are some Empty-Values, Can't Save!");
 			return;
@@ -305,6 +311,7 @@ public class AppController {
 		};
 		
 		// ディレクトリにファイルが存在しない場合、空の配列(files.length == 0)が返却される
+		// ディレクトリが存在しない場合、nullが返却される
 		File[] files = dir.listFiles(filter);
 
 		return files;
@@ -376,7 +383,9 @@ public class AppController {
 
 		int frameBeforeNum = 0;
 		long start = 0, end = 0, grabEnd = 0, time = 0;
-		while (frameGrabber.getFrameNumber() != frameGrabber.getLengthInFrames()-1) {
+		int dup_count = 0;
+		while (frameGrabber.getFrameNumber() < totalFrameNum-1) {
+			// System.out.println(frameGrabber.getFrameNumber() + " : " + frameGrabber.getLengthInFrames());
 			start = System.currentTimeMillis();
 
 			Frame frame = frameGrabber.grab();
@@ -384,7 +393,19 @@ public class AppController {
 
 			grabEnd = System.currentTimeMillis();
 
-			if (nowLoadingFrameNum % interval == 0 && (nowLoadingFrameNum == 0 || frameBeforeNum != nowLoadingFrameNum)) {
+			if (nowLoadingFrameNum != 0 && frameBeforeNum == nowLoadingFrameNum) {
+				dup_count++;
+				if (dup_count > 100) {
+					System.out.println("[SUSPEND] Over 100 Duplication-Count");
+					break;
+				}
+				continue;
+			} else {
+				dup_count = 0;
+				frameBeforeNum = nowLoadingFrameNum;
+			}
+			
+			if (nowLoadingFrameNum % interval == 0) {
 				System.out.println("Now Frame: " + nowLoadingFrameNum + "/" + totalFrameNum);
 			} else {
 				continue;
@@ -394,9 +415,8 @@ public class AppController {
 			if (img == null)	continue;
 
 			// 静止画で出力
-			int digit = Integer.toString(frameGrabber.getLengthInFrames()).length();
+			int digit = Integer.toString(totalFrameNum).length();
 			ImageIO.write(img, imageExtension, new File(save_dir, String.format("%0" + digit + "d", nowLoadingFrameNum) + "." + imageExtension));
-			frameBeforeNum = nowLoadingFrameNum;
 
 			end = System.currentTimeMillis();
 			time = (totalFrameNum-nowLoadingFrameNum)*(grabEnd-start) + ((totalFrameNum-nowLoadingFrameNum)/interval)*(end-start);
