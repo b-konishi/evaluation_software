@@ -21,6 +21,8 @@ import org.bytedeco.javacv.Java2DFrameConverter;
 import org.bytedeco.javacv.OpenCVFrameConverter;
 
 import javafx.animation.AnimationTimer;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -31,6 +33,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.paint.Color;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 
@@ -52,11 +55,9 @@ public class AppController {
 	String save_dir = "";
 	String save_csv_path = "";
 
-	//String sample_path = "/konishi/evaluation_software/Octocat.png";
-
 	AnimationTimer always_timer = null;
 	AnimationTimer timer = null;
-
+	
 	/**
 	 * 現在読み込み中のフレーム数
 	 */
@@ -94,11 +95,12 @@ public class AppController {
 
 		evaluation_map = new HashMap<Integer, Integer>();
 
-		//Image image = new Image(sample_path);
-		//video_frame.setImage(image);
 		frame_num_text.setText("" + frameInterval);
-
-
+		
+		// 数値のみ入力できるテキストフィールドに設定
+		setTextIntegerOnlyProperty(evaluation_text);
+		setTextIntegerOnlyProperty(frame_num_text);
+		
 		/*
 		 * 軽い処理＆GUIコンポーネントを操作する場合はアニメーションタイマーで処理
 		 * (重たい処理はGUIが固まるので注意)
@@ -113,8 +115,21 @@ public class AppController {
 		always_timer.start();
 
 	}
-
-
+	
+	/**
+	 * テキストフィールドに自然数のみしか入力できないフィルタを設定する
+	 * @param text テキストフィールド
+	 */
+	public void setTextIntegerOnlyProperty(final TextField text) {
+		text.textProperty().addListener(new ChangeListener<String>() {
+		    public void changed(ObservableValue<? extends String> observable, String oldValue, 
+		        String newValue) {
+		        if (!newValue.matches("\\d*")) {
+		            text.setText(newValue.replaceAll("[^\\d]", ""));
+		        }
+		    }
+		});
+	}
 
 	@FXML public void handleSelectVideoMenu(ActionEvent e) throws IOException {
 		System.out.println("[SELECT] Select Video");
@@ -129,7 +144,7 @@ public class AppController {
 
 		video_path = "file:" + importFile.getPath();
 
-		description_label.setText("Set video-path: " + video_path);
+		setTextAndColor(description_label, "Set video-path: " + video_path, Color.BLACK);
 
 	}
 
@@ -156,13 +171,11 @@ public class AppController {
 		text = evaluation_text.getText();
 		System.out.println("text: " + text);
 
-		if (isNumber(text)) {
+		if (!text.isEmpty()) {
 			evaluation_map.put(location, Integer.parseInt(text));
 			System.out.println("Key: " + location + ", Value: " + evaluation_map.get(location));
-		} else if (text.isEmpty()) {
-			if (evaluation_map.get(location) != null) {
-				evaluation_map.remove(location);
-			}
+		} else if (evaluation_map.get(location) != null) {
+			evaluation_map.remove(location);
 		}
 	}
 
@@ -170,17 +183,17 @@ public class AppController {
 		System.out.println("[SELECT] Save CSV");
 		
 		if (save_dir.isEmpty()) {
-			description_label.setText("Select Image-Directory");
+			setTextAndColor(description_label, "Select Image-Directory", Color.RED);
 			return;
 		}
 		
 		if (getFilteredFiles(save_dir, imageExtension).length != evaluation_map.size()) {
-			description_label.setText("There are some Empty-Values, Can't Save!");
+			setTextAndColor(description_label, "There are some Empty-Values, Can't Save!", Color.RED);
 			return;
 		}
 		
 		if (video_path.isEmpty()) {
-			description_label.setText("Select Video-Path");
+			setTextAndColor(description_label, "Select Video-Path", Color.RED);
 			return;
 		}
 
@@ -192,7 +205,7 @@ public class AppController {
 
 		convertToCsv(evaluation_map);
 
-		description_label.setText("Wrote in \"" + save_csv_path + "\"");
+		setTextAndColor(description_label, "Save in \"" + save_csv_path + "\"", Color.BLACK);
 
 	}
 
@@ -227,15 +240,15 @@ public class AppController {
 		System.out.println("[CONTROL] Press MakeFrameButton");
 
 		String frameText = frame_num_text.getText();
-		if (!isNumber(frameText)) {
-			description_label.setText("Input Number in the \"Frame.\"");
+		if (Integer.parseInt(frameText) <= 0) {
+			setTextAndColor(description_label, "Input Number(> 0) in the Frame-Interval", Color.RED);
 			frame_num_text.setText("" + frameInterval);
 			return;
 		} else if (video_path == "") {
-			description_label.setText("Select Video-Path");
+			setTextAndColor(description_label, "Select Video-Path", Color.RED);
 			return;
 		} else if (save_dir == "") {
-			description_label.setText("Select Save-Image-Directory.");
+			setTextAndColor(description_label, "Select Save-Image-Directory.", Color.RED);
 			return;
 		}
 
@@ -252,10 +265,10 @@ public class AppController {
 				if (isLoading) {
 					if (nowLoadingFrameNum % 100 == 0) {
 						time = String.format("%.1f", estimatedTime);
-						description_label.setText("Now Loading (" + nowLoadingFrameNum + "/" + totalFrameNum + "),  " + time + "s remaining");
+						setTextAndColor(description_label, "Now Loading (" + nowLoadingFrameNum + "/" + totalFrameNum + "),  " + time + "s remaining", Color.BLACK);
 					}
 					if (nowLoadingFrameNum != 0 && nowLoadingFrameNum >= totalFrameNum-100) {
-						description_label.setText("Loading Finished!");
+						setTextAndColor(description_label, "Loading Finished!", Color.BLACK);
 						clearEnvironment();
 					}
 				}
@@ -296,7 +309,7 @@ public class AppController {
 	public File[] getFilteredFiles(String dir_path, final String extension) {
 
 		if (dir_path.isEmpty()) {
-			description_label.setText("Select Save-Image-Directory");
+			setTextAndColor(description_label, "Select Save-Image-Directory", Color.RED);
 			return null;
 		}
 
@@ -333,8 +346,8 @@ public class AppController {
 	@FXML public void handleNextButton(MouseEvent mouse) {
 		System.out.println("[CONTROL] Press NextButton");
 
+		if (save_dir.isEmpty())	return;
 		File[] files = getFilteredFiles(save_dir, imageExtension);
-		if (files == null)	return;
 
 		if (location != files.length-1) {
 			location++;
@@ -353,6 +366,8 @@ public class AppController {
 	@FXML public void handleBeforeButton(MouseEvent mouse) {
 		System.out.println("[CONTROL] Press BeforeButton");
 
+		if (save_dir.isEmpty())	return;
+
 		if (location != 0) {
 			location--;
 		}
@@ -365,6 +380,11 @@ public class AppController {
 		}
 
 		updateImage();
+	}
+	
+	public void setTextAndColor(Label label, String msg, Color color) {
+		label.setTextFill(color);
+		label.setText(msg);
 	}
 
 	public void get_frame(int interval) throws IOException {
@@ -445,6 +465,7 @@ public class AppController {
 		return paintConverter.getBufferedImage(frame,1);
 	}
 
+	@Deprecated
 	public boolean isNumber(String num) {
 		try {
 			Integer.parseInt(num);
