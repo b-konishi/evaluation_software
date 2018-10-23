@@ -10,11 +10,6 @@ Author: konishi
 - Linux, Windows10 動作確認済み
 
 
-## 使用ライブラリ
-- JavaCV 1.4.3 (インストールにはMaven使用)
-- JavaFX 2.4.0 SDK
-
-
 ## 使用時の注意事項
 - 本ソフトウェア(.jar)は、プラットフォームに依存せず、ライブラリや開発環境を必要としませんが、
 このファイルにライブラリを抽出しているため、ファイルサイズが約1.2GBと大変大きくなっています。
@@ -29,6 +24,7 @@ Author: konishi
 - [Java公式サイト](https://java.com/ja/download/)から最新のJREをインストールする
 - コマンドプロンプトなどで、`java -version`と入力し、Version-1.8以上であることを確認する
 
+
 ### Linux
 - 最新バージョンをインストールするため、apt-getなどでインストールしない
 - Windowsと同様に[Java公式サイト](https://java.com/ja/download/)にアクセスし、「.tar.gz」などの圧縮ファイルを入手する
@@ -37,12 +33,19 @@ Author: konishi
 - ターミナルで`java -version`とし、確認する
 
 ----------------------------------
-以下は、開発上の注意点
 
+以下では、開発における内容を説明する。
+
+## 使用ライブラリ
+- JavaCV 1.4.3 (インストールにはMaven使用)
+- JavaFX 2.4.0 SDK
+
+## 開発上の注意点
 - JavaCV 1.4.3は、ffmpegにより動画をフレーム単位で読み込むことなどができるが、Mavenでxmlを記述し、インストールすることが必須(2018/10現在)
 - Mavenのpom.xmlに必要なライブラリを記述後は、「Alt+F5」でMavenプロジェクトの更新を行うとよい
-- JavaFXのGUiの開発には、SceneBuilderを用いると良い。SceneBuilderならマウスドラッグなどで視覚的にコンポーネントを配置できる。
+- JavaFXのGUIの開発には、SceneBuilderを用いると良い。SceneBuilderならマウスドラッグなどで視覚的にコンポーネントを配置できる。
 
+以下にMavenのpom.xmlを記載する(パッケージ名などは変更する必要があるので注意)
 
 ## pom.xml
 
