@@ -200,6 +200,11 @@ public class AppController {
 		DirectoryChooser dc = new DirectoryChooser();
 		File importDir = dc.showDialog(null);
 		
+		if (importDir == null) {
+			System.out.println("No select");
+			return;
+		}
+		
 		String f = new File(video_path).getName();
 		save_csv_path = importDir + File.separator + f.substring(0,f.lastIndexOf('.')) + ".csv";
 
