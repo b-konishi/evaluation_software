@@ -1,4 +1,5 @@
 # 実験評価用ソフトウェア
+Author: konishi
 -----------------------------
 
 ## 実行環境
@@ -22,12 +23,268 @@
 
 ## Javaインストール方法
 ### Windows
-- [JAVA公式サイト](https://java.com/ja/download/)から最新のJREをインストールしてください
-- コマンドプロンプトなどで、`java -version`と入力し、Version-1.8以上であることを確認してください
+- [Java公式サイト](https://java.com/ja/download/)から最新のJREをインストールする
+- コマンドプロンプトなどで、`java -version`と入力し、Version-1.8以上であることを確認する
 
 ### Linux
-- Windowsと同様に[JAVA公式サイト](https://java.com/ja/download/)にアクセスし、「.tar.gz」などの圧縮ファイルを入手する。
+- 最新バージョンをインストールするため、apt-getなどでインストールしない
+- Windowsと同様に[Java公式サイト](https://java.com/ja/download/)にアクセスし、「.tar.gz」などの圧縮ファイルを入手する
 - 任意のディレクトリ(ex. /usr/java/)を作成し、そこに解凍する(.tar.gzならば、`tar -zxvf [file.tar.gz]`)。
-- bashrcなどにパス(ex. /usr/java/[解凍したディレクトリ]/bin/)などを登録する
-- ターミナルで`java -version`とし、確認
+- bashrcなどにパス(ex. /usr/java/[解凍したディレクトリ]/bin/)を登録する
+- ターミナルで`java -version`とし、確認する
 
+----------------------------------
+以下は、開発上の注意点
+
+- JavaCV 1.4.3は、ffmpegにより動画をフレーム単位で読み込むことなどができるが、Mavenでxmlを記述し、インストールすることが必須(2018/10現在)
+- Mavenのpom.xmlに必要なライブラリを記述後は、「Alt+F5」でMavenプロジェクトの更新を行うとよい
+- JavaFXのGUiの開発には、SceneBuilderを用いると良い。SceneBuilderならマウスドラッグなどで視覚的にコンポーネントを配置できる。
+
+
+## pom.xml
+
+Mavenによるライブラリを実行可能jarに含めるためには、maven-assembly-pluginが必要となる。(以下のコードの最初のplugin)
+
+```xml
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>konishi.evaluation_software</groupId>
+	<artifactId>evaluation_software</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+	<name>evaluation_software</name>
+	<url>http://maven.apache.org</url>
+
+	<build>
+		<plugins>
+			<!-- 実行可能jarファイル用のプラグイン -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>3.0.0</version>
+				<configuration>
+					<finalName>test</finalName>
+					<descriptorRefs>
+						<!-- 依存するリソースをすべてjarに同梱する -->
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass>konishi.evaluation_software.Main</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+				<executions>
+					<execution>
+						<!-- idタグは任意の文字列であれば何でもよい -->
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+
+	<dependencies>
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>javacpp</artifactId>
+			<version>1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>javacv</artifactId>
+			<version>1.4.3</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.bytedeco</groupId>
+			<artifactId>javacpp</artifactId>
+			<version>1.4.3</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>opencv-platform</artifactId>
+			<version>3.4.3-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>ffmpeg-platform</artifactId>
+			<version>4.0.2-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>flycapture-platform</artifactId>
+			<version>2.11.3.121-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>spinnaker-platform</artifactId>
+			<version>1.15.0.63-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>libdc1394-platform</artifactId>
+			<version>2.2.5-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>libfreenect-platform</artifactId>
+			<version>0.5.3-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>libfreenect2-platform</artifactId>
+			<version>0.2.0-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>librealsense-platform</artifactId>
+			<version>1.12.1-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>videoinput-platform</artifactId>
+			<version>0.200-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>artoolkitplus-platform</artifactId>
+			<version>2.3.1-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>chilitags-platform</artifactId>
+			<version>master-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>flandmark-platform</artifactId>
+			<version>1.07-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>hdf5-platform</artifactId>
+			<version>1.10.3-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>mkl-platform</artifactId>
+			<version>2019.0-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>mkl-dnn-platform</artifactId>
+			<version>0.16-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>openblas-platform</artifactId>
+			<version>0.3.3-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>arpack-ng-platform</artifactId>
+			<version>3.6.3-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>cminpack-platform</artifactId>
+			<version>1.3.6-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>fftw-platform</artifactId>
+			<version>3.3.8-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>gsl-platform</artifactId>
+			<version>2.5-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>cpython-platform</artifactId>
+			<version>3.6-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>llvm-platform</artifactId>
+			<version>7.0.0-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>libpostal-platform</artifactId>
+			<version>1.1-alpha-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>leptonica-platform</artifactId>
+			<version>1.76.0-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>tesseract-platform</artifactId>
+			<version>4.0.0-rc2-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>caffe-platform</artifactId>
+			<version>1.0-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>cuda-platform</artifactId>
+			<version>10.0-7.3-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>mxnet-platform</artifactId>
+			<version>1.3.0-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>tensorflow-platform</artifactId>
+			<version>1.11.0-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>tensorrt-platform</artifactId>
+			<version>5.0-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>ale-platform</artifactId>
+			<version>0.6.0-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>onnx-platform</artifactId>
+			<version>1.3.0-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>liquidfun-platform</artifactId>
+			<version>20170717-43d53e0-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>skia-platform</artifactId>
+			<version>20170511-53d6729-1.4.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bytedeco.javacpp-presets</groupId>
+			<artifactId>systems-platform</artifactId>
+			<version>1.4.3</version>
+		</dependency>
+	</dependencies>
+</project>
+```
